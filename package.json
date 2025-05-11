@@ -14,7 +14,9 @@
     "element-plus": "^2.9.10",
     "framer-motion": "^12.10.5",
     "vue": "^3.5.13",
-    "vue-router": "^4.5.1"
+    "vue-router": "^4.5.1",
+    "@iconify/vue": "^4.1.1",
+    "@tabler/icons-vue": "^2.40.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.2.3",

@@ -1,90 +1,144 @@
-<script setup lang="ts">
-import { computed } from 'vue'
-
-const props = defineProps({
-  modelValue: { type: [String, Number], default: '' },
-  placeholder: { type: String, default: '' },
-  type: { type: String, default: 'text' },
-  error: { type: Boolean, default: false },
-  disabled: { type: Boolean, default: false }
-})
-
-const emit = defineEmits(['update:modelValue'])
-
-const inputClasses = computed(() => ({
-  'neo-input': true,
-  'error-state': props.error,
-  'disabled-state': props.disabled
-}))
-</script>
-
 <template>
-  <div class="neo-input-container">
-    <input
-      :value="modelValue"
-      @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
-      :type="type"
-      :placeholder="placeholder"
-      :class="inputClasses"
-      :disabled="disabled"
-    />
-    <span v-if="error" class="error-message">!</span>
+  <div class="neo-input-wrapper">
+    <label v-if="label" class="neo-input-label">{{ label }}</label>
+    <div class="neo-input-container neomorphic" :class="{ 'is-focused': focused }">
+      <el-icon v-if="prefixIcon" class="neo-input-icon prefix">
+        <component :is="prefixIcon" />
+      </el-icon>
+      <input
+        v-if="type !== 'textarea'"
+        ref="input"
+        :type="type"
+        :value="modelValue"
+        :placeholder="placeholder"
+        :disabled="disabled"
+        :min="min"
+        :max="max"
+        :step="step"
+        class="neo-input"
+        @input="handleInput"
+        @focus="focused = true"
+        @blur="focused = false"
+      />
+      <textarea
+        v-else
+        ref="input"
+        :value="modelValue"
+        :placeholder="placeholder"
+        :disabled="disabled"
+        class="neo-textarea"
+        @input="handleInput"
+        @focus="focused = true"
+        @blur="focused = false"
+      ></textarea>
+      <el-icon v-if="suffixIcon" class="neo-input-icon suffix">
+        <component :is="suffixIcon" />
+      </el-icon>
+    </div>
+    <span v-if="error" class="neo-input-error">{{ error }}</span>
   </div>
 </template>
 
+<script lang="ts">
+import { defineComponent, ref, PropType } from 'vue'
+
+type InputType = 'text' | 'number' | 'password' | 'email' | 'date' | 'time' | 'textarea'
+
+export default defineComponent({
+  name: 'NeoInput',
+  props: {
+    modelValue: {
+      type: [String, Number],
+      default: ''
+    },
+    type: {
+      type: String as PropType<InputType>,
+      default: 'text'
+    },
+    label: String,
+    placeholder: String,
+    disabled: Boolean,
+    prefixIcon: String,
+    suffixIcon: String,
+    error: String,
+    min: [String, Number],
+    max: [String, Number],
+    step: [String, Number]
+  },
+  emits: ['update:modelValue'],
+  setup(props, { emit }) {
+    const focused = ref(false)
+
+    const handleInput = (event: Event) => {
+      const target = event.target as HTMLInputElement | HTMLTextAreaElement
+      emit('update:modelValue', target.value)
+    }
+
+    return {
+      focused,
+      handleInput
+    }
+  }
+})
+</script>
+
 <style scoped>
+.neo-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.neo-input-label {
+  color: var(--text-primary);
+  font-size: 0.9em;
+  font-weight: 500;
+}
+
 .neo-input-container {
-  --primary-shadow: 5px 5px 10px rgba(0, 0, 0, 0.2),
-                   -5px -5px 10px rgba(255, 255, 255, 0.5);
-  --inset-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.1),
-                 inset -2px -2px 5px rgba(255, 255, 255, 0.8);
-  --error-color: #ff4757;
-  position: relative;
-  margin: 1rem 0;
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  transition: all 0.3s ease;
 }
 
-.neo-input {
-  width: 100%;
-  padding: 0.8rem 1rem;
+.neo-input-container.is-focused {
+  box-shadow: 
+    inset 4px 4px 8px var(--shadow-dark),
+    inset -4px -4px 8px var(--shadow-light);
+}
+
+.neo-input,
+.neo-textarea {
+  flex: 1;
   border: none;
-  border-radius: 12px;
-  background: #e0e5ec;
-  box-shadow: var(--primary-shadow);
-  transition: all 0.2s ease;
-  font-family: inherit;
-}
-
-.neo-input:focus {
-  box-shadow: var(--inset-shadow);
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 1em;
   outline: none;
+  width: 100%;
 }
 
-.error-state {
-  box-shadow: 0 0 0 2px var(--error-color), var(--primary-shadow) !important;
+.neo-textarea {
+  min-height: 100px;
+  resize: vertical;
 }
 
-.disabled-state {
-  opacity: 0.6;
-  cursor: not-allowed;
+.neo-input-icon {
+  color: var(--text-secondary);
+  font-size: 1.1em;
 }
 
-.error-message {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--error-color);
-  font-weight: bold;
+.neo-input-icon.prefix {
+  margin-right: 8px;
 }
 
-/* 暗色主题适配 */
-.dark .neo-input {
-  background: #2d3748;
-  color: #f7fafc;
-  --primary-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3),
-                   -5px -5px 10px rgba(74, 85, 104, 0.5);
-  --inset-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.3),
-                 inset -2px -2px 5px rgba(74, 85, 104, 0.5);
-  --error-color: #ff6b81;
+.neo-input-icon.suffix {
+  margin-left: 8px;
+}
+
+.neo-input-error {
+  color: var(--button-color, #e74c3c);
+  font-size: 0.85em;
 }
 </style>
